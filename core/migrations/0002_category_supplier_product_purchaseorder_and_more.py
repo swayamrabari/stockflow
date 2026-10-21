@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0001_initial'),
     ]
@@ -15,7 +14,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Category',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('name', models.CharField(max_length=100, unique=True)),
                 ('description', models.TextField(blank=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
@@ -28,7 +35,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Supplier',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('name', models.CharField(max_length=150)),
                 ('email', models.EmailField(blank=True, max_length=255)),
                 ('phone', models.CharField(blank=True, max_length=30)),
@@ -43,7 +58,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Product',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('sku', models.CharField(max_length=50, unique=True)),
                 ('name', models.CharField(max_length=150)),
                 ('description', models.TextField(blank=True)),
@@ -52,7 +75,14 @@ class Migration(migrations.Migration):
                 ('reorder_level', models.IntegerField(default=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='products', to='core.category')),
+                (
+                    'category',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='products',
+                        to='core.category',
+                    ),
+                ),
             ],
             options={
                 'db_table': 'products',
@@ -62,12 +92,41 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PurchaseOrder',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('received', 'Received')], default='pending', max_length=20)),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'status',
+                    models.CharField(
+                        choices=[('pending', 'Pending'), ('received', 'Received')],
+                        default='pending',
+                        max_length=20,
+                    ),
+                ),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('received_at', models.DateTimeField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_purchase_orders', to=settings.AUTH_USER_MODEL)),
-                ('supplier', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='purchase_orders', to='core.supplier')),
+                (
+                    'created_by',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='created_purchase_orders',
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    'supplier',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='purchase_orders',
+                        to='core.supplier',
+                    ),
+                ),
             ],
             options={
                 'db_table': 'purchase_orders',
@@ -77,11 +136,33 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PurchaseOrderItem',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
                 ('quantity', models.IntegerField()),
                 ('unit_cost', models.DecimalField(decimal_places=2, max_digits=12)),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='purchase_order_items', to='core.product')),
-                ('purchase_order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='core.purchaseorder')),
+                (
+                    'product',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='purchase_order_items',
+                        to='core.product',
+                    ),
+                ),
+                (
+                    'purchase_order',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='items',
+                        to='core.purchaseorder',
+                    ),
+                ),
             ],
             options={
                 'db_table': 'purchase_order_items',
@@ -90,13 +171,45 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='StockMovement',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('movement_type', models.CharField(choices=[('incoming', 'Incoming'), ('outgoing', 'Outgoing'), ('adjustment', 'Adjustment')], max_length=20)),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'movement_type',
+                    models.CharField(
+                        choices=[
+                            ('incoming', 'Incoming'),
+                            ('outgoing', 'Outgoing'),
+                            ('adjustment', 'Adjustment'),
+                        ],
+                        max_length=20,
+                    ),
+                ),
                 ('quantity', models.IntegerField()),
                 ('reference_note', models.TextField(blank=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('performed_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='stock_movements', to=settings.AUTH_USER_MODEL)),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='stock_movements', to='core.product')),
+                (
+                    'performed_by',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='stock_movements',
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    'product',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='stock_movements',
+                        to='core.product',
+                    ),
+                ),
             ],
             options={
                 'db_table': 'stock_movements',
@@ -105,26 +218,44 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='product',
-            constraint=models.CheckConstraint(condition=models.Q(('unit_price__gte', 0)), name='product_price_nonnegative'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('unit_price__gte', 0)),
+                name='product_price_nonnegative',
+            ),
         ),
         migrations.AddConstraint(
             model_name='product',
-            constraint=models.CheckConstraint(condition=models.Q(('quantity_in_stock__gte', 0)), name='product_stock_nonnegative'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('quantity_in_stock__gte', 0)),
+                name='product_stock_nonnegative',
+            ),
         ),
         migrations.AddConstraint(
             model_name='product',
-            constraint=models.CheckConstraint(condition=models.Q(('reorder_level__gte', 0)), name='product_reorder_nonnegative'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('reorder_level__gte', 0)),
+                name='product_reorder_nonnegative',
+            ),
         ),
         migrations.AddConstraint(
             model_name='purchaseorderitem',
-            constraint=models.CheckConstraint(condition=models.Q(('quantity__gt', 0)), name='po_item_quantity_positive'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('quantity__gt', 0)),
+                name='po_item_quantity_positive',
+            ),
         ),
         migrations.AddConstraint(
             model_name='purchaseorderitem',
-            constraint=models.CheckConstraint(condition=models.Q(('unit_cost__gte', 0)), name='po_item_cost_nonnegative'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('unit_cost__gte', 0)),
+                name='po_item_cost_nonnegative',
+            ),
         ),
         migrations.AddConstraint(
             model_name='stockmovement',
-            constraint=models.CheckConstraint(condition=models.Q(('quantity__gt', 0)), name='stock_movement_quantity_positive'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('quantity__gt', 0)),
+                name='stock_movement_quantity_positive',
+            ),
         ),
     ]

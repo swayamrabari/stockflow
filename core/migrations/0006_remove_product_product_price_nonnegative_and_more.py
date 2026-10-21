@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0005_remove_stockmovement_stock_movement_quantity_positive_and_more'),
     ]

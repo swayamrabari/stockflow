@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0007_customer_salesorder_stockmovement_sales_order_and_more'),
     ]
@@ -13,6 +12,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='salesorder',
             name='is_direct',
-            field=models.BooleanField(default=False, help_text='Goods are handed over immediately, so the sale is dispatched at creation and removed from stock.', verbose_name='Direct / local sale'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Goods are handed over immediately, so the sale is dispatched at creation and removed from stock.',
+                verbose_name='Direct / local sale',
+            ),
         ),
     ]

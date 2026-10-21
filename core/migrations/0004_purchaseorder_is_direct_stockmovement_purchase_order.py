@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0003_alter_user_email'),
     ]
@@ -14,11 +13,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='purchaseorder',
             name='is_direct',
-            field=models.BooleanField(default=False, help_text='Goods are already on hand, so the order is received immediately and added to stock.', verbose_name='Direct / local order'),
+            field=models.BooleanField(
+                default=False,
+                help_text='Goods are already on hand, so the order is received immediately and added to stock.',
+                verbose_name='Direct / local order',
+            ),
         ),
         migrations.AddField(
             model_name='stockmovement',
             name='purchase_order',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='stock_movements', to='core.purchaseorder'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='stock_movements',
+                to='core.purchaseorder',
+            ),
         ),
     ]

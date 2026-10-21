@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0004_purchaseorder_is_direct_stockmovement_purchase_order'),
     ]
@@ -17,10 +16,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='stockmovement',
             name='quantity',
-            field=models.IntegerField(help_text='Signed change: positive adds stock, negative removes it.'),
+            field=models.IntegerField(
+                help_text='Signed change: positive adds stock, negative removes it.'
+            ),
         ),
         migrations.AddConstraint(
             model_name='stockmovement',
-            constraint=models.CheckConstraint(condition=models.Q(('quantity', 0), _negated=True), name='stock_movement_quantity_nonzero'),
+            constraint=models.CheckConstraint(
+                condition=models.Q(('quantity', 0), _negated=True),
+                name='stock_movement_quantity_nonzero',
+            ),
         ),
     ]

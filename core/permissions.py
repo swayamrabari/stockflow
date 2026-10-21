@@ -6,7 +6,7 @@ class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Allow admins/superusers only.
 
     Anonymous users are redirected to the login page; authenticated
-    non-admins get a 403 rendered directly (see core/templates/403.html).
+    non-admins get a 403 rendered directly.
     """
 
     permission_denied_message = 'You do not have permission to view this page.'

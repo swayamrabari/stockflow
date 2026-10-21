@@ -1,16 +1,6 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from core.models import PurchaseOrder, PurchaseOrderItem, User
-
-
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('StockFlow', {'fields': ('role',)}),
-    )
-    list_display = ('username', 'email', 'role', 'is_superuser')
-    list_filter = BaseUserAdmin.list_filter + ('role',)
+from core.models import PurchaseOrder, PurchaseOrderItem
 
 
 class PurchaseOrderItemInline(admin.TabularInline):
@@ -30,3 +20,10 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     )
     list_filter = ('status', 'is_direct')
     inlines = (PurchaseOrderItemInline,)
+
+
+@admin.register(PurchaseOrderItem)
+class PurchaseOrderItemAdmin(admin.ModelAdmin):
+    list_display = ('purchase_order', 'product', 'quantity')
+    list_select_related = ('purchase_order', 'product')
+    search_fields = ('product__sku', 'product__name')

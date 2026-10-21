@@ -6,7 +6,6 @@ dependencies = [
     "django>=6.1.2",
     "django-tailwind-cli>=4.8.1",
     "psycopg[binary]>=3.3.6",
-    "pyjwt>=2.15.1",
     "python-dotenv>=1.2.4",
 ]
 
