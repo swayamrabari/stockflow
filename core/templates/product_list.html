@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Products &middot; StockFlow{% endblock %}
+{% block content %}
+<main class="page max-w-6xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Products</h1>
+      <p class="mt-1 text-sm text-neutral-600">
+        Every product you stock, with stock levels and reorder points.
+      </p>
+    </div>
+
+    <a href="{% url 'product_create' %}" class="btn btn-primary"
+      >New product</a
+    >
+  </div>
+
+  <form method="get" class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-end">
+    <div class="w-full lg:min-w-0 lg:flex-[2]">
+      <label class="label" for="id_q">Search</label>
+      <input
+        type="search"
+        name="q"
+        id="id_q"
+        value="{{ search_query }}"
+        placeholder="Name or SKU"
+      />
+    </div>
+
+    <div class="w-full lg:min-w-0 lg:flex-1">
+      <label class="label" for="id_category">Category</label>
+      <select name="category" id="id_category">
+        <option value="">All categories</option>
+        {% for category in categories %}
+        <option
+          value="{{ category.pk }}"
+          {% if selected_category == category.pk|stringformat:"s" %}selected{% endif %}
+        >
+          {{ category.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="w-full lg:min-w-0 lg:flex-1">
+      <label class="label" for="id_stock">Stock</label>
+      <select name="stock" id="id_stock">
+        <option value="">All stock</option>
+        <option value="low" {% if selected_stock == 'low' %}selected{% endif %}>
+          At or below reorder
+        </option>
+        <option value="out" {% if selected_stock == 'out' %}selected{% endif %}>
+          Out of stock
+        </option>
+      </select>
+    </div>
+
+    <div class="flex w-full items-center gap-3 lg:w-auto lg:shrink-0">
+      <button type="submit" class="btn btn-primary flex-1 lg:flex-none">
+        Filter
+      </button>
+      <a
+        href="{% url 'product_list' %}"
+        class="btn btn-secondary flex-1 lg:flex-none"
+        >Reset</a
+      >
+    </div>
+  </form>
+
+  <div class="mt-6 overflow-x-auto border border-black">
+    <table class="w-full border-collapse text-left text-sm">
+      <thead class="bg-black text-white">
+        <tr>
+          <th scope="col" class="px-4 py-3 font-semibold">Name</th>
+          <th scope="col" class="px-4 py-3 font-semibold">SKU</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Category</th>
+          <th scope="col" class="px-4 py-3 text-right font-semibold">Stock</th>
+          <th scope="col" class="px-4 py-3 text-right font-semibold">
+            Reorder level
+          </th>
+          <th scope="col" class="px-4 py-3 text-right font-semibold">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-300">
+        {% for product in products %}
+        <tr>
+          <td class="px-4 py-3 font-medium">{{ product.name }}</td>
+          <td class="px-4 py-3 font-mono text-[0.8125rem] text-neutral-500">
+            {{ product.sku }}
+          </td>
+          <td class="px-4 py-3 text-neutral-600">{{ product.category.name }}</td>
+          <td class="px-4 py-3 text-right font-medium tabular-nums">
+            {{ product.quantity_in_stock }}
+          </td>
+          <td class="px-4 py-3 text-right tabular-nums text-neutral-600">
+            {{ product.reorder_level }}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-end gap-4">
+              <a class="link" href="{% url 'product_update' product.pk %}"
+                >Edit</a
+              >
+              {% if user.is_admin %}
+              <a class="link" href="{% url 'product_delete' product.pk %}"
+                >Delete</a
+              >
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-4 py-10 text-center text-neutral-500">
+            No products found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

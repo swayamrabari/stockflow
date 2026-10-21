@@ -1,0 +1,111 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}StockFlow{% endblock %}</title>
+    <link
+      rel="preload"
+      href="{% static 'core/Inter-Variable.ttf' %}"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}" />
+  </head>
+  <body
+    class="flex h-screen flex-col overflow-hidden bg-white text-neutral-900 antialiased"
+  >
+    {% if user.is_authenticated %}
+    <header class="shrink-0 border-b border-black bg-white">
+      <div
+        class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-4 sm:px-8"
+      >
+        <a href="{% url 'home' %}" class="flex items-center gap-3">
+          <span
+            class="inline-flex h-9 w-9 items-center justify-center bg-black text-sm font-bold text-white"
+            aria-hidden="true"
+            >SF</span
+          >
+          <span class="text-base font-bold tracking-tight">StockFlow</span>
+        </a>
+
+        <nav
+          class="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm font-medium"
+          aria-label="Primary"
+        >
+          {% if user.is_admin %}
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'dashboard' %}"
+            >Dashboard</a
+          >
+          {% endif %}
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'category_list' %}"
+            >Categories</a
+          >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'product_list' %}"
+            >Products</a
+          >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'supplier_list' %}"
+            >Suppliers</a
+          >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'customer_list' %}"
+            >Customers</a
+          >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'purchase_order_list' %}"
+            >Purchases</a
+          >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'sales_order_list' %}"
+            >Sales</a
+          >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'stock_movement_list' %}"
+            >Movements</a
+          >
+        </nav>
+
+        <div class="flex items-center gap-4 text-sm">
+          <span class="text-neutral-500"
+            >{{ user.username }} &middot; {{ user.get_role_display }}</span
+          >
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm">
+              Logout
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+    {% endif %}
+
+    <div class="flex flex-1 flex-col overflow-y-auto scroll-area">
+      {% if messages %}
+      <div class="mx-auto w-full max-w-6xl space-y-2 px-4 pt-4 sm:px-8">
+        {% for message in messages %}
+        <p
+          class="border border-l-4 border-black bg-white px-3.5 py-3 text-sm font-medium text-neutral-900"
+        >
+          {{ message }}
+        </p>
+        {% endfor %}
+      </div>
+      {% endif %} {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

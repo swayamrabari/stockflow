@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+{% block title %}Inventory overview &middot; StockFlow{% endblock %}
+{% load tz %}
+
+{% block content %}
+<main class="page max-w-6xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Inventory overview</h1>
+      <p class="mt-1 text-sm text-neutral-600">
+        Welcome back, {{ user.username }}. Live snapshot as of {% now "H:i   d/m/Y" %}.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="{% url 'purchase_order_create' %}" class="btn btn-primary"
+        >New purchase</a
+      >
+      <a href="{% url 'sales_order_create' %}" class="btn btn-primary"
+        >New sale</a
+      >
+      <a href="{% url 'stock_movement_create' %}" class="btn btn-primary"
+        >Record movement</a
+      >
+      <a href="{% url 'product_create' %}" class="btn btn-primary"
+        >New product</a
+      >
+    </div>
+  </div>
+
+  <div class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+    <a
+      href="{% url 'product_list' %}"
+      class="border border-black bg-white p-4 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+    >
+      <span
+        class="block text-[0.75rem] font-semibold uppercase tracking-wide text-neutral-500"
+        >Products</span
+      >
+      <span class="mt-2 block text-2xl font-bold tabular-nums"
+        >{{ product_count }}</span
+      >
+      <span class="mt-1 block text-[0.8125rem] text-neutral-500"
+        >{{ category_count }} categor{{ category_count|pluralize:"y,ies" }}</span
+      >
+    </a>
+
+    <a
+      href="{% url 'product_list' %}"
+      class="border border-black bg-white p-4 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+    >
+      <span
+        class="block text-[0.75rem] font-semibold uppercase tracking-wide text-neutral-500"
+        >Units on hand</span
+      >
+      <span class="mt-2 block text-2xl font-bold tabular-nums"
+        >{{ total_units }}</span
+      >
+      <span class="mt-1 block text-[0.8125rem] text-neutral-500"
+        >Across all products</span
+      >
+    </a>
+
+    <a
+      href="{% url 'product_list' %}?stock=low"
+      class="border border-black bg-white p-4 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+    >
+      <span
+        class="block text-[0.75rem] font-semibold uppercase tracking-wide text-neutral-500"
+        >Low stock</span
+      >
+      <span class="mt-2 block text-2xl font-bold tabular-nums"
+        >{{ low_stock_count }}</span
+      >
+      <span class="mt-1 block text-[0.8125rem] text-neutral-500"
+        >{{ out_of_stock_count }} out of stock</span
+      >
+    </a>
+
+    <a
+      href="{% url 'purchase_order_list' %}?status=pending"
+      class="border border-black bg-white p-4 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+    >
+      <span
+        class="block text-[0.75rem] font-semibold uppercase tracking-wide text-neutral-500"
+        >Pending purchases</span
+      >
+      <span class="mt-2 block text-2xl font-bold tabular-nums"
+        >{{ pending_purchase_count }}</span
+      >
+      <span class="mt-1 block text-[0.8125rem] text-neutral-500"
+        >{{ pending_purchase_units }} unit{{ pending_purchase_units|pluralize }}
+        on order</span
+      >
+    </a>
+
+    <a
+      href="{% url 'sales_order_list' %}?status=pending"
+      class="border border-black bg-white p-4 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+    >
+      <span
+        class="block text-[0.75rem] font-semibold uppercase tracking-wide text-neutral-500"
+        >Pending dispatches</span
+      >
+      <span class="mt-2 block text-2xl font-bold tabular-nums"
+        >{{ pending_sales_count }}</span
+      >
+      <span class="mt-1 block text-[0.8125rem] text-neutral-500"
+        >{{ pending_sales_units }} unit{{ pending_sales_units|pluralize }}
+        requested</span
+      >
+    </a>
+  </div>
+
+  <p
+    class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-neutral-500"
+  >
+    <a class="link text-neutral-900" href="{% url 'category_list' %}"
+      >{{ category_count }} categories</a
+    >
+    <span aria-hidden="true">&middot;</span>
+    <a class="link text-neutral-900" href="{% url 'supplier_list' %}"
+      >{{ supplier_count }} suppliers</a
+    >
+    <span aria-hidden="true">&middot;</span>
+    <a class="link text-neutral-900" href="{% url 'customer_list' %}"
+      >{{ customer_count }} customers</a
+    >
+  </p>
+
+  <section class="mt-8">
+    <div class="flex flex-col border border-black bg-white">
+      <div
+        class="flex items-start justify-between gap-3 border-b border-black px-4 py-3"
+      >
+        <div>
+          <h2 class="text-lg font-bold tracking-tight">Low stock alerts</h2>
+          <p class="mt-0.5 text-sm text-neutral-600">
+            {{ low_stock_count }} product{{ low_stock_count|pluralize }} at or
+            below reorder level.
+          </p>
+        </div>
+        <a
+          class="link shrink-0 text-sm"
+          href="{% url 'product_list' %}?stock=low"
+          >View all</a
+        >
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-left text-sm">
+          <thead class="bg-black text-white">
+            <tr>
+              <th scope="col" class="px-4 py-3 font-semibold">Product</th>
+              <th scope="col" class="px-4 py-3 font-semibold">Category</th>
+              <th scope="col" class="px-4 py-3 text-right font-semibold">
+                Stock
+              </th>
+              <th scope="col" class="px-4 py-3 text-right font-semibold">
+                Reorder at
+              </th>
+              <th scope="col" class="px-4 py-3 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-300">
+            {% for product in low_stock_products %}
+            <tr>
+              <td class="px-4 py-3">
+                <a
+                  class="link font-medium"
+                  href="{% url 'product_update' product.pk %}"
+                  >{{ product.name }}</a
+                >
+                <span class="block font-mono text-[0.75rem] text-neutral-500"
+                  >{{ product.sku }}</span
+                >
+              </td>
+              <td class="px-4 py-3 text-neutral-600">
+                {{ product.category.name }}
+              </td>
+              <td class="px-4 py-3 text-right font-medium tabular-nums">
+                {{ product.quantity_in_stock }}
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums text-neutral-600">
+                {{ product.reorder_level }}
+              </td>
+              <td class="px-4 py-3">
+                {% if product.quantity_in_stock == 0 %}
+                <span
+                  class="border border-black bg-black px-2 py-0.5 text-[0.75rem] font-medium text-white"
+                  >Out of stock</span
+                >
+                {% else %}
+                <span
+                  class="border border-black px-2 py-0.5 text-[0.75rem] font-medium"
+                  >Low</span
+                >
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td
+                colspan="5"
+                class="px-4 py-10 text-center text-neutral-500"
+              >
+                All products are above their reorder level.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="mt-8">
+    <div>
+      <h2 class="text-lg font-bold tracking-tight">Recent orders</h2>
+      <p class="mt-0.5 text-sm text-neutral-600">
+        Latest purchasing and sales activity.
+      </p>
+    </div>
+
+    <div class="mt-4 space-y-4">
+      <div class="border border-black bg-white">
+        <div
+          class="flex items-center justify-between gap-3 border-b border-black px-4 py-3"
+        >
+          <div>
+            <h3 class="text-lg font-bold tracking-tight">Purchases</h3>
+            <p class="mt-0.5 text-sm text-neutral-600">
+              {{ pending_purchase_count }} pending
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <a
+              class="link"
+              href="{% url 'purchase_order_list' %}?status=pending"
+              >Pending</a
+            >
+            <a class="link" href="{% url 'purchase_order_list' %}">View all</a>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-left text-sm">
+            <thead class="bg-black text-white">
+              <tr>
+                <th scope="col" class="px-4 py-3 font-semibold">Order</th>
+                <th scope="col" class="px-4 py-3 font-semibold">Supplier</th>
+                <th scope="col" class="px-4 py-3 font-semibold">Status</th>
+                <th scope="col" class="px-4 py-3 text-right font-semibold">
+                  Created
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-300">
+              {% for order in recent_purchases %}
+              <tr>
+                <td class="px-4 py-3 font-medium">
+                  <a
+                    class="link"
+                    href="{% url 'purchase_order_detail' order.pk %}"
+                    >#{{ order.pk }}</a
+                  >
+                </td>
+                <td class="px-4 py-3">
+                  <span class="font-medium">{{ order.supplier.name }}</span>
+                  <span class="block text-[0.75rem] text-neutral-500">
+                    {% with item_count=order.items.all|length %}
+                    {{ item_count }} Item{{ item_count|pluralize }} &middot;
+                    {{ order.created_by.username }} {% endwith %}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex border border-black px-2 py-0.5 text-[0.75rem] font-medium"
+                    >{{ order.get_status_display }}</span
+                  >
+                  {% if order.is_direct %}
+                  <span class="ml-1 text-[0.75rem] font-medium text-neutral-500"
+                    >Direct</span
+                  >
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap text-neutral-600">
+                  {{ order.created_at|localtime|date:"H:i   d/m/Y" }}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td
+                  colspan="4"
+                  class="px-4 py-10 text-center text-neutral-500"
+                >
+                  No purchase orders yet.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="border border-black bg-white">
+        <div
+          class="flex items-center justify-between gap-3 border-b border-black px-4 py-3"
+        >
+          <div>
+            <h3 class="text-lg font-bold tracking-tight">Sales</h3>
+            <p class="mt-0.5 text-sm text-neutral-600">
+              {{ pending_sales_count }} pending
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <a class="link" href="{% url 'sales_order_list' %}?status=pending"
+              >Pending</a
+            >
+            <a class="link" href="{% url 'sales_order_list' %}">View all</a>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-left text-sm">
+            <thead class="bg-black text-white">
+              <tr>
+                <th scope="col" class="px-4 py-3 font-semibold">Order</th>
+                <th scope="col" class="px-4 py-3 font-semibold">Customer</th>
+                <th scope="col" class="px-4 py-3 font-semibold">Status</th>
+                <th scope="col" class="px-4 py-3 text-right font-semibold">
+                  Created
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-300">
+              {% for order in recent_sales %}
+              <tr>
+                <td class="px-4 py-3 font-medium">
+                  <a class="link" href="{% url 'sales_order_detail' order.pk %}"
+                    >#{{ order.pk }}</a
+                  >
+                </td>
+                <td class="px-4 py-3">
+                  <span class="font-medium">{{ order.customer.name }}</span>
+                  <span class="block text-[0.75rem] text-neutral-500">
+                    {% with item_count=order.items.all|length %}
+                    {{ item_count }} Item{{ item_count|pluralize }} &middot;
+                    {{ order.created_by.username }} {% endwith %}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span
+                      class="border border-black px-2 py-0.5 text-[0.75rem] font-medium"
+                      >{{ order.get_status_display }}</span
+                    >
+                    {% if order.is_direct %}
+                    <span
+                      class="text-[0.75rem] font-medium text-neutral-500"
+                      >Direct</span
+                    >
+                    {% endif %} {% if order.status == 'pending' %}
+                    {% if order.has_enough_stock %}
+                    <span
+                      class="border border-black px-2 py-0.5 text-[0.75rem] font-medium"
+                      >Ready</span
+                    >
+                    {% else %}
+                    <span
+                      class="border border-black bg-black px-2 py-0.5 text-[0.75rem] font-medium text-white"
+                      >Short stock</span
+                    >
+                    {% endif %} {% endif %}
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap text-neutral-600">
+                  {{ order.created_at|localtime|date:"H:i   d/m/Y" }}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td
+                  colspan="4"
+                  class="px-4 py-10 text-center text-neutral-500"
+                >
+                  No sales orders yet.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mt-8">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold tracking-tight">Recent stock movements</h2>
+        <p class="mt-0.5 text-sm text-neutral-600">
+          Latest changes to the inventory ledger.
+        </p>
+      </div>
+      <a
+        class="btn btn-secondary btn-sm"
+        href="{% url 'stock_movement_list' %}"
+        >View all</a
+      >
+    </div>
+
+    <div class="mt-4 overflow-x-auto border border-black">
+      <table class="w-full border-collapse text-left text-sm">
+        <thead class="bg-black text-white">
+          <tr>
+            <th scope="col" class="px-4 py-3 font-semibold">When</th>
+            <th scope="col" class="px-4 py-3 font-semibold">Product</th>
+            <th scope="col" class="px-4 py-3 font-semibold">Type</th>
+            <th scope="col" class="px-4 py-3 text-right font-semibold">
+              Change
+            </th>
+            <th scope="col" class="px-4 py-3 font-semibold">By</th>
+            <th scope="col" class="px-4 py-3 font-semibold">Reference</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-300">
+          {% for movement in recent_movements %}
+          <tr>
+            <td class="px-4 py-3 whitespace-nowrap text-neutral-600">
+              {{ movement.created_at|localtime|date:"H:i   d/m/Y" }}
+            </td>
+            <td class="px-4 py-3">
+              <a
+                class="link font-medium"
+                href="{% url 'product_update' movement.product.pk %}"
+                >{{ movement.product.name }}</a
+              >
+              <span class="block font-mono text-[0.75rem] text-neutral-500"
+                >{{ movement.product.sku }}</span
+              >
+            </td>
+            <td class="px-4 py-3">{{ movement.get_movement_type_display }}</td>
+            <td class="px-4 py-3 text-right font-medium tabular-nums">
+              {{ movement.signed_quantity }}
+            </td>
+            <td class="px-4 py-3 text-neutral-600">
+              {{ movement.performed_by.username }}
+            </td>
+            <td class="px-4 py-3 text-neutral-600">
+              {% if movement.purchase_order %}
+              <a
+                class="link"
+                href="{% url 'purchase_order_detail' movement.purchase_order.pk %}"
+                >Purchase #{{ movement.purchase_order.pk }}</a
+              >
+              {% elif movement.sales_order %}
+              <a
+                class="link"
+                href="{% url 'sales_order_detail' movement.sales_order.pk %}"
+                >Sale #{{ movement.sales_order.pk }}</a
+              >
+              {% else %}
+              <a
+                class="link"
+                href="{% url 'stock_movement_detail' movement.pk %}"
+                >Detail</a
+              >
+              {% if movement.reference_note %}
+              <span class="block text-[0.75rem] text-neutral-500"
+                >{{ movement.reference_note }}</span
+              >
+              {% endif %} {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-10 text-center text-neutral-500">
+              No stock movements recorded yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,152 @@
+/* Tailwind CSS entry point for StockFlow.
+ *
+ * Source detection is automatic (Tailwind walks the project from BASE_DIR and
+ * skips .gitignore'd paths + binaries). The build output lives inside
+ * STATICFILES_DIRS, so it must be excluded explicitly: otherwise every build
+ * rescans the previous build as a source and classes you delete from templates
+ * never disappear from the stylesheet.
+ */
+@import 'tailwindcss';
+
+@source not "../assets/css/tailwind.css";
+
+/* Inter (variable) ---------------------------------------------------------
+ * The file lives in core/static/core/ and is served through STATIC_URL, so
+ * the URL stays root-relative like the stylesheet itself. */
+@font-face {
+  font-family: 'Inter';
+  src: url('/static/core/Inter-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Base typography ---------------------------------------------------------
+ * Body copy sits at a comfortable 400; emphasis is added deliberately with
+ * font-medium/semibold instead of forcing every element to the same weight. */
+@layer base {
+  body {
+    @apply font-normal text-neutral-900;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-neutral-900;
+  }
+
+  ::placeholder {
+    @apply text-neutral-400;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * StockFlow design system
+ *
+ * All interactive controls share the same height (2.75rem) and horizontal
+ * padding (1rem) so buttons and inputs line up everywhere.
+ * ------------------------------------------------------------------------- */
+
+@layer components {
+  /* Buttons ---------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex h-11 cursor-pointer items-center justify-center gap-2 border border-black px-4 text-[0.9375rem] font-semibold whitespace-nowrap no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black;
+  }
+
+  .btn-primary {
+    @apply bg-black text-white;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-neutral-900;
+  }
+
+  .btn-sm {
+    @apply h-9 px-3 text-[0.8125rem];
+  }
+
+  .scroll-area {
+    /* Hide the scrollbar but keep scrolling, so no gutter is reserved and
+     * the layout never shifts when content becomes scrollable. */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge/IE */
+  }
+
+  .scroll-area::-webkit-scrollbar {
+    display: none; /* Chromium, Safari */
+  }
+
+  /* Form controls ----------------------------------------------------------
+   * Styled by element (not class), so Django's widgets need no attributes. */
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='submit'],
+    [type='button'],
+    [type='reset'],
+    [type='file'],
+    [type='hidden'],
+    [type='range'],
+    [type='color']
+  ),
+  select,
+  textarea {
+    @apply block h-11 w-full border border-black bg-white px-3 text-[0.9375rem] font-normal text-neutral-900 outline-none focus:outline-2 focus:outline-offset-1 focus:outline-black;
+  }
+
+  textarea {
+    @apply h-auto py-2.5;
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+    padding-right: 2.5rem;
+  }
+
+  /* The sales product dropdown shows stock in the open option list, while
+   * the closed control shows the shorter product label (see the template's
+   * overlay span and JavaScript). */
+  .stock-select {
+    color: transparent;
+  }
+
+  .stock-select option {
+    color: var(--color-neutral-900);
+  }
+
+  .label {
+    @apply mb-1.5 block text-[0.8125rem] font-medium text-neutral-700;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-[0.8125rem] font-medium text-red-700;
+  }
+
+  .help-text {
+    @apply mt-1.5 text-[0.8125rem] font-normal text-neutral-500;
+  }
+
+  /* Layout ----------------------------------------------------------------- */
+  .page {
+    @apply mx-auto w-full flex-1 px-4 py-8 sm:px-8;
+  }
+
+  .card {
+    @apply border border-black bg-white p-7 sm:p-8;
+  }
+
+  .link {
+    @apply font-medium underline underline-offset-2;
+  }
+}

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Purchases &middot; StockFlow{% endblock %}
+{% load tz %}
+{% block content %}
+<main class="page max-w-6xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Purchases</h1>
+      <p class="mt-1 text-sm text-neutral-600">
+        Goods ordered from suppliers, and whether they have arrived.
+      </p>
+    </div>
+
+    <a href="{% url 'purchase_order_create' %}" class="btn btn-primary"
+      >New purchase</a
+    >
+  </div>
+
+  <form method="get" class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-end">
+    <div class="w-full lg:min-w-0 lg:flex-[2]">
+      <label class="label" for="id_q">Search</label>
+      <input
+        type="search"
+        name="q"
+        id="id_q"
+        value="{{ search_query }}"
+        placeholder="Supplier name or order #"
+      />
+    </div>
+
+    <div class="w-full lg:min-w-0 lg:flex-1">
+      <label class="label" for="id_status">Status</label>
+      <select name="status" id="id_status">
+        <option value="">All statuses</option>
+        {% for value, label in statuses %}
+        <option
+          value="{{ value }}"
+          {% if selected_status == value %}selected{% endif %}
+        >
+          {{ label }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="w-full lg:min-w-0 lg:flex-[1.2]">
+      <label class="label" for="id_date_from">From</label>
+      <input
+        type="date"
+        name="date_from"
+        id="id_date_from"
+        value="{{ date_from }}"
+      />
+    </div>
+
+    <div class="w-full lg:min-w-0 lg:flex-[1.2]">
+      <label class="label" for="id_date_to">To</label>
+      <input type="date" name="date_to" id="id_date_to" value="{{ date_to }}" />
+    </div>
+
+    <div class="flex w-full items-center gap-3 lg:w-auto lg:shrink-0">
+      <button type="submit" class="btn btn-primary flex-1 lg:flex-none">
+        Filter
+      </button>
+      <a
+        href="{% url 'purchase_order_list' %}"
+        class="btn btn-secondary flex-1 lg:flex-none"
+        >Reset</a
+      >
+    </div>
+  </form>
+
+  <div class="mt-6 overflow-x-auto border border-black">
+    <table class="w-full border-collapse text-left text-sm">
+      <thead class="bg-black text-white">
+        <tr>
+          <th scope="col" class="px-4 py-3 font-semibold">Order</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Supplier</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Status</th>
+          <th scope="col" class="px-4 py-3 text-right font-semibold">Items</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Created by</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Created</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-300">
+        {% for order in purchase_orders %}
+        <tr>
+          <td class="px-4 py-3 font-medium">
+            <a class="link" href="{% url 'purchase_order_detail' order.pk %}"
+              >#{{ order.pk }}</a
+            >
+          </td>
+          <td class="px-4 py-3">{{ order.supplier.name }}</td>
+          <td class="px-4 py-3">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span
+                class="border border-black px-2 py-0.5 text-[0.8125rem] font-medium"
+              >
+                {{ order.get_status_display }}
+              </span>
+              {% if order.is_direct %}
+              <span class="text-[0.8125rem] font-medium text-neutral-500"
+                >Direct</span
+              >
+              {% endif %}
+            </div>
+          </td>
+          <td class="px-4 py-3 text-right font-medium tabular-nums">
+            {{ order.items.all|length }}
+          </td>
+          <td class="px-4 py-3 text-neutral-600">
+            {{ order.created_by.username }}
+          </td>
+          <td class="px-4 py-3 text-neutral-600">
+            {{ order.created_at|localtime|date:"H:i   d/m/Y" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-4 py-10 text-center text-neutral-500">
+            No purchases yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

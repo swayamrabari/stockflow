@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% block title %}
+{% if object.pk %}Edit sale #{{ object.pk }}{% else %}New sale{% endif %} &middot; StockFlow
+{% endblock %}
+
+{% block content %}
+<main class="page max-w-6xl">
+  <a
+    class="link text-sm"
+    href="{% if object.pk %}{% url 'sales_order_detail' object.pk %}{% else %}{% url 'sales_order_list' %}{% endif %}"
+    >&larr; Back to sales</a
+  >
+
+  <h1 class="mt-4 text-2xl font-bold tracking-tight">
+    {% if object.pk %}Edit sale #{{ object.pk }}{% else %}New sale{% endif %}
+  </h1>
+  <p class="mt-1 text-sm text-neutral-600">
+    {% if object.pk %}Adjust the customer or line items. Dispatched sales
+    cannot be edited.{% else %}Choose a customer, then add every product you
+    are selling.{% endif %}
+  </p>
+
+  <form method="post" class="mt-6 space-y-6" novalidate>
+    {% csrf_token %}
+
+    {% if direct_error %}
+    <div class="border border-l-4 border-black bg-white px-3.5 py-3 text-sm">
+      <p class="font-semibold">This direct sale cannot be completed.</p>
+      {% if shortages %}
+        {% for product, requested, available in shortages %}
+          {{ product.name }} {{ requested }} requested, only {{ available }} available.
+        {% endfor %}
+      {% else %}
+      <p class="mt-2">{{ direct_error }}</p>
+      {% endif %}
+      <p class="mt-2 text-neutral-600">
+        Reduce the quantity or switch off Direct / local sale, then try again.
+      </p>
+    </div>
+    {% elif shortages %}
+    <div class="border border-l-4 border-black bg-white px-3.5 py-3 text-sm">
+      <p class="font-semibold">Not enough stock for some items.</p>
+        {% for product, requested, available in shortages %}
+          {{ product.name }} {{ requested }} requested, only {{ available }} available.
+        {% endfor %}
+      <p class="mt-2 text-neutral-600">
+        You can still create this sale; it stays pending until it is dispatched.
+      </p>
+    </div>
+    {% endif %}
+
+    {% include 'partials/_form_field.html' with field=form.customer %}
+
+    <div>
+      <label class="flex items-start gap-3 border border-black p-4">
+        {{ form.is_direct }}
+        <span>
+          <span class="block -mt-0.5 font-medium"
+            >{{ form.is_direct.label }}</span
+          >
+          <span class="help-text mt-1 block">{{ form.is_direct.help_text }}</span>
+        </span>
+      </label>
+      {% for error in form.is_direct.errors %}
+      <p class="field-error">! {{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <section>
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <h2 class="text-lg font-semibold tracking-tight">Line items</h2>
+        <button type="button" id="add-item" class="btn btn-secondary btn-sm">
+          Add item
+        </button>
+      </div>
+
+      {{ items.management_form }} {% for error in items.non_form_errors %}
+      <p class="field-error">! {{ error }}</p>
+      {% endfor %}
+
+      <div class="mt-3 overflow-x-auto border border-black">
+        <table class="w-full border-collapse text-left text-sm">
+          <thead class="bg-black text-white">
+            <tr>
+              <th scope="col" class="w-4/5 px-4 py-3 font-semibold">Product</th>
+              <th scope="col" class="w-1/5 px-4 py-3 font-semibold">
+                Quantity
+              </th>
+              <th
+                scope="col"
+                class="w-px whitespace-nowrap px-4 py-3 text-right font-semibold"
+              >
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody id="item-rows" class="divide-y divide-neutral-300">
+            {% for item in items %}
+            <tr>
+              <td class="p-4 align-top">
+                <span class="hidden">{{ item.DELETE }}</span>
+                {{ item.id }}
+                <div class="product-select-wrap relative">
+                  {{ item.product }}
+                  <span
+                    class="product-selected-label pointer-events-none absolute inset-y-0 left-3 right-10 flex items-center overflow-hidden text-[0.9375rem] text-ellipsis whitespace-nowrap text-neutral-900"
+                    aria-hidden="true"
+                  ></span>
+                </div>
+                {% for error in item.product.errors %}
+                <p class="field-error">! {{ error }}</p>
+                {% endfor %}
+              </td>
+              <td class="p-4 align-top">
+                {{ item.quantity }} {% for error in item.quantity.errors %}
+                <p class="field-error">! {{ error }}</p>
+                {% endfor %}
+              </td>
+              <td class="w-px whitespace-nowrap p-4 text-right align-middle">
+                <button type="button" data-remove-row class="link">
+                  Remove
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="help-text">At least one item is required.</p>
+    </section>
+
+    <div
+      id="order-summary"
+      class="divide-y divide-neutral-300 border border-black text-sm sm:flex"
+    >
+      <div class="flex flex-1 items-center justify-between px-4 py-2">
+        <span class="font-medium text-neutral-600">Total items</span>
+        <span id="summary-lines" class="font-semibold tabular-nums">0</span>
+      </div>
+      <div
+        class="flex flex-1 items-center justify-between px-4 py-2 border-black sm:border-l"
+      >
+        <span class="font-medium text-neutral-600">Total units</span>
+        <span id="summary-units" aria-live="polite" class="font-semibold tabular-nums"
+          >0</span
+        >
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 pt-2">
+      {% if shortages and not direct_error %}
+      <button type="submit" name="confirm" value="1" class="btn btn-primary">
+        Continue anyway
+      </button>
+      {% else %}
+      <button type="submit" class="btn btn-primary">
+        {% if object.pk %}Save changes{% else %}Create sale{% endif %}
+      </button>
+      {% endif %}
+      <a
+        href="{% if object.pk %}{% url 'sales_order_detail' object.pk %}{% else %}{% url 'sales_order_list' %}{% endif %}"
+        class="btn btn-secondary"
+        >Cancel</a
+      >
+    </div>
+  </form>
+
+  <template id="empty-item-row">
+    <tr>
+      <td class="p-4 align-top">
+        <span class="hidden">{{ items.empty_form.DELETE }}</span>
+        {{ items.empty_form.id }}
+        <div class="product-select-wrap relative">
+          {{ items.empty_form.product }}
+          <span
+            class="product-selected-label pointer-events-none absolute inset-y-0 left-3 right-10 flex items-center overflow-hidden text-[0.9375rem] text-ellipsis whitespace-nowrap text-neutral-900"
+            aria-hidden="true"
+          ></span>
+        </div>
+      </td>
+      <td class="p-4 align-top">{{ items.empty_form.quantity }}</td>
+      <td class="w-px whitespace-nowrap p-4 text-right align-top">
+        <button type="button" data-remove-row class="link">Remove</button>
+      </td>
+    </tr>
+  </template>
+
+  <script>
+    (function () {
+      const rows = document.getElementById('item-rows');
+      const template = document.getElementById('empty-item-row');
+      const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+
+      function number(value) {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function hiddenByDelete(row) {
+        const field = row.querySelector('input[name$="-DELETE"]');
+        return field ? field.checked : false;
+      }
+
+      function selectedProductLabel(select) {
+        const option = select.options[select.selectedIndex];
+        if (!option) return '';
+
+        // The option text includes stock for the open list; the closed
+        // control should show only the product label.
+        return option.text.replace(/\s*\(\d+ in stock\)$/, '');
+      }
+
+      function syncSelectedProductLabels() {
+        rows.querySelectorAll('select[name$="-product"]').forEach(
+          function (select) {
+            const wrapper = select.closest('.product-select-wrap');
+            const label =
+              wrapper && wrapper.querySelector('.product-selected-label');
+
+            if (!label) return;
+
+            label.textContent = selectedProductLabel(select);
+            select.classList.add('stock-select');
+          }
+        );
+      }
+
+      function updateSummary() {
+        let lines = 0;
+        let units = 0;
+
+        Array.from(rows.querySelectorAll('tr')).forEach(function (row) {
+          if (hiddenByDelete(row)) return;
+
+          const product = row.querySelector('select[name$="-product"]');
+          const quantity = row.querySelector('input[name$="-quantity"]');
+          const quantityValue = number(quantity && quantity.value);
+
+          if (product && product.value) lines += 1;
+
+          units += quantityValue;
+        });
+
+        document.getElementById('summary-lines').textContent = lines;
+        document.getElementById('summary-units').textContent = units;
+      }
+
+      document.getElementById('add-item').addEventListener('click', function () {
+        const index = rows.querySelectorAll('tr').length;
+        const html = template.innerHTML.replaceAll('__prefix__', index);
+        rows.insertAdjacentHTML('beforeend', html);
+        totalForms.value = index + 1;
+        syncSelectedProductLabels();
+        updateSummary();
+      });
+
+      rows.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-remove-row]');
+        if (!button) return;
+
+        const row = button.closest('tr');
+        const visibleRows = Array.from(rows.querySelectorAll('tr')).filter(
+          function (candidate) {
+            return !candidate.classList.contains('hidden');
+          }
+        );
+
+        if (visibleRows.length === 1) return;
+
+        // Rows stay in the DOM so their forms keep their index; the
+        // hidden DELETE field tells the formset to drop the row on save.
+        const field = row.querySelector('input[name$="-DELETE"]');
+        if (field) field.checked = true;
+        row.classList.add('hidden');
+
+        updateSummary();
+      });
+
+      rows.addEventListener('input', updateSummary);
+      rows.addEventListener('change', function () {
+        syncSelectedProductLabels();
+        updateSummary();
+      });
+
+      // Re-hide rows that came back marked for deletion after a failed
+      // submit, then draw the initial totals.
+      Array.from(rows.querySelectorAll('tr')).forEach(function (row) {
+        if (hiddenByDelete(row)) row.classList.add('hidden');
+      });
+
+      syncSelectedProductLabels();
+      updateSummary();
+    })();
+  </script>
+</main>
+{% endblock %}

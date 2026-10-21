@@ -1,0 +1,14 @@
+{% comment %}
+  Single form field styled to match the StockFlow design.
+  Usage: {% include 'partials/_form_field.html' with field=form.name %}
+{% endcomment %}
+<div
+  class="{% if field.errors %}[&_input]:border-2 [&_select]:border-2 [&_textarea]:border-2{% endif %}"
+>
+  <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }} {% if field.help_text %}
+  <p class="help-text">{{ field.help_text }}</p>
+  {% endif %} {% for error in field.errors %}
+  <p class="field-error">! {{ error }}</p>
+  {% endfor %}
+</div>

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Suppliers &middot; StockFlow{% endblock %}
+
+{% block content %}
+<main class="page max-w-6xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Suppliers</h1>
+      <p class="mt-1 text-sm text-neutral-600">
+        Companies and people you buy stock from.
+      </p>
+    </div>
+
+    {% if user.is_authenticated %}
+    <a href="{% url 'supplier_create' %}" class="btn btn-primary"
+      >New supplier</a
+    >
+    {% endif %}
+  </div>
+
+  <div class="mt-6 overflow-x-auto border border-black">
+    <table class="w-full border-collapse text-left text-sm">
+      <thead class="bg-black text-white">
+        <tr>
+          <th scope="col" class="px-4 py-3 font-semibold">Name</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Email</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Phone</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Address</th>
+          <th scope="col" class="px-4 py-3 text-right font-semibold">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-300">
+        {% for supplier in suppliers %}
+        <tr>
+          <td class="px-4 py-3 font-medium">{{ supplier.name }}</td>
+          <td class="px-4 py-3 text-neutral-600">
+            {{ supplier.email|default:"—" }}
+          </td>
+          <td class="px-4 py-3 text-neutral-600">
+            {{ supplier.phone|default:"—" }}
+          </td>
+          <td class="px-4 py-3 text-neutral-600">
+            {{ supplier.address|default:"—" }}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-end gap-4">
+              <a class="link" href="{% url 'supplier_update' supplier.pk %}"
+                >Edit</a
+              >
+              {% if user.is_admin %}
+              <a class="link" href="{% url 'supplier_delete' supplier.pk %}"
+                >Delete</a
+              >
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-10 text-center text-neutral-500">
+            No suppliers yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

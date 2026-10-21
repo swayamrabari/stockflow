@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Create account &middot; StockFlow{% endblock %}
+
+{% block content %}
+<main class="flex flex-1 items-center justify-center p-4 sm:p-8">
+  <section class="card w-full max-w-md">
+    <header class="mb-7">
+      <span
+        class="mb-4 inline-flex h-11 w-11 items-center justify-center bg-black text-[0.9375rem] font-bold text-white"
+        aria-hidden="true"
+        >SF</span
+      >
+      <h1 class="text-[1.375rem] font-bold tracking-tight">
+        Create your account
+      </h1>
+      <p class="mt-1.5 text-sm text-neutral-600">
+        Start tracking your inventory in minutes
+      </p>
+    </header>
+
+    {% if form.non_field_errors %}
+    <ul
+      class="mb-5 list-none border border-l-4 border-red-700 bg-white px-3.5 py-3 text-sm font-medium text-red-700"
+    >
+      {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" class="space-y-4" novalidate>
+      {% csrf_token %}
+
+      <div>
+        <label class="label" for="id_username">{{ form.username.label }}</label>
+        <input
+          type="text"
+          name="username"
+          id="id_username"
+          value="{{ form.username.value|default_if_none:'' }}"
+          maxlength="150"
+          autocomplete="username"
+          autofocus
+          required
+          {% if form.username.errors %}class="border-2"{% endif %}
+        />
+        {% for error in form.username.errors %}
+        <p class="field-error">! {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label class="label" for="id_password1">{{ form.password1.label }}</label>
+        <input
+          type="password"
+          name="password1"
+          id="id_password1"
+          autocomplete="new-password"
+          required
+          {% if form.password1.errors %}class="border-2"{% endif %}
+        />
+        {% for error in form.password1.errors %}
+        <p class="field-error">! {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label class="label" for="id_password2">{{ form.password2.label }}</label>
+        <input
+          type="password"
+          name="password2"
+          id="id_password2"
+          autocomplete="new-password"
+          required
+          {% if form.password2.errors %}class="border-2"{% endif %}
+        />
+        {% for error in form.password2.errors %}
+        <p class="field-error">! {{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full">
+        Create account
+      </button>
+    </form>
+
+    <p
+      class="mt-6 border-t border-neutral-300 pt-4 text-center text-sm text-neutral-500"
+    >
+      Already have an account?
+      <a class="link text-neutral-900" href="{% url 'login' %}">Sign in</a>
+    </p>
+  </section>
+</main>
+{% endblock %}

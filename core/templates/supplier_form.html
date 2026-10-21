@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edit supplier{% else %}New supplier{% endif %} &middot; StockFlow{% endblock %}
+
+{% block content %}
+<main class="page max-w-2xl">
+  <a class="link text-sm" href="{% url 'supplier_list' %}"
+    >&larr; Back to suppliers</a
+  >
+
+  <h1 class="mt-4 text-2xl font-bold tracking-tight">
+    {% if object %}Edit supplier{% else %}New supplier{% endif %}
+  </h1>
+  <p class="mt-1 text-sm text-neutral-600">
+    {% if object %}Update this supplier's contact details.{% else %}Add a
+    company or person you buy stock from.{% endif %}
+  </p>
+
+  <form method="post" class="mt-6 space-y-4" novalidate>
+    {% csrf_token %} {% for field in form %} {% include 'partials/_form_field.html' with field=field %} {% endfor %}
+
+    <div class="flex flex-wrap items-center gap-3 pt-2">
+      <button type="submit" class="btn btn-primary">
+        {% if object %}Save changes{% else %}Create supplier{% endif %}
+      </button>
+      <a href="{% url 'supplier_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

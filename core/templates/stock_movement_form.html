@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Record stock movement &middot; StockFlow{% endblock %}
+
+{% block content %}
+<main class="page max-w-2xl">
+  <a class="link text-sm" href="{% url 'stock_movement_list' %}"
+    >&larr; Back to stock movements</a
+  >
+
+  <h1 class="mt-4 text-2xl font-bold tracking-tight">
+    Record stock movement
+  </h1>
+  <p class="mt-1 text-sm text-neutral-600">
+    Record incoming stock, outgoing stock, or a manual adjustment.
+  </p>
+
+  <form method="post" class="mt-6 space-y-4" novalidate>
+    {% csrf_token %} {% include 'partials/_form_field.html' with field=form.product %}
+    {% include 'partials/_form_field.html' with field=form.movement_type %}
+    {% include 'partials/_form_field.html' with field=form.quantity %}
+
+    <div id="direction-field">
+      {% include 'partials/_form_field.html' with field=form.direction %}
+    </div>
+
+    {% include 'partials/_form_field.html' with field=form.reference_note %}
+
+    <div class="flex flex-wrap items-center gap-3 pt-2">
+      <button type="submit" class="btn btn-primary">Record movement</button>
+      <a href="{% url 'stock_movement_list' %}" class="btn btn-secondary"
+        >Cancel</a
+      >
+    </div>
+  </form>
+
+  <script>
+    (function () {
+      const type = document.getElementById('id_movement_type');
+      const field = document.getElementById('direction-field');
+
+      function toggleDirection() {
+        field.classList.toggle('hidden', type.value !== 'adjustment');
+      }
+
+      type.addEventListener('change', toggleDirection);
+      toggleDirection();
+    })();
+  </script>
+</main>
+{% endblock %}

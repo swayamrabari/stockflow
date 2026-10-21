@@ -1,0 +1,97 @@
+{% extends 'base.html' %} {% block title %}Movement #{{ movement.pk }} &middot;
+StockFlow{% endblock %} {% block content %}
+<main class="page max-w-6xl">
+  <a class="link text-sm" href="{% url 'stock_movement_list' %}"
+    >&larr; Back to stock movements</a
+  >
+
+  <div class="mt-4">
+    <h1 class="text-2xl font-bold tracking-tight">
+      Movement #{{ movement.pk }}
+    </h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-600">
+      <span
+        class="border border-black px-2 py-0.5 font-medium text-neutral-900"
+      >
+        {{ movement.get_movement_type_display }}
+      </span>
+      {% if movement.purchase_order %}
+      <span class="font-medium"
+        >Purchase #{{ movement.purchase_order.pk }}</span
+      >
+      {% elif movement.sales_order %}
+      <span class="font-medium">Sale #{{ movement.sales_order.pk }}</span>
+      {% else %}
+      <span class="font-medium">Manual entry</span>
+      {% endif %}
+    </p>
+  </div>
+
+  <dl
+    class="mt-6 grid grid-cols-1 gap-px border border-black bg-black sm:grid-cols-2"
+  >
+    <div class="bg-white px-4 py-3">
+      <dt class="text-[0.8125rem] font-medium text-neutral-500">Product</dt>
+      <dd class="mt-0.5 font-medium">
+        <span class="font-medium text-neutral-500"
+          >{{ movement.product.sku }}</span
+        >
+        {{ movement.product.name }}
+      </dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+      <dt class="text-[0.8125rem] font-medium text-neutral-500">Change</dt>
+      <dd class="mt-0.5 font-medium tabular-nums">
+        {{ movement.signed_quantity }}
+      </dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+      <dt class="text-[0.8125rem] font-medium text-neutral-500">Recorded by</dt>
+      <dd class="mt-0.5 font-medium">{{ movement.performed_by.username }}</dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+      <dt class="text-[0.8125rem] font-medium text-neutral-500">Recorded</dt>
+      <dd class="mt-0.5 font-medium">
+        {{ movement.created_at|date:"H:i d/m/Y" }}
+      </dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+      <dt class="text-[0.8125rem] font-medium text-neutral-500">
+        Current stock
+      </dt>
+      <dd class="mt-0.5 font-medium tabular-nums">
+        {{ movement.product.quantity_in_stock }}
+      </dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+      <dt class="text-[0.8125rem] font-medium text-neutral-500">Reference</dt>
+      <dd class="mt-0.5 font-medium">
+        {% if movement.purchase_order %}
+        <a
+          class="link"
+          href="{% url 'purchase_order_detail' movement.purchase_order.pk %}"
+          >Purchase #{{ movement.purchase_order.pk }}</a
+        >
+        {% elif movement.sales_order %}
+        <a
+          class="link"
+          href="{% url 'sales_order_detail' movement.sales_order.pk %}"
+          >Sale #{{ movement.sales_order.pk }}</a
+        >
+        {% else %} Manual entry {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  {% if movement.reference_note %}
+  <section class="mt-6 border border-black px-4 py-3">
+    <h2 class="text-[0.8125rem] font-medium text-neutral-500">
+      Reference note
+    </h2>
+    <p class="mt-1 text-sm whitespace-pre-line">
+      {{ movement.reference_note }}
+    </p>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}
