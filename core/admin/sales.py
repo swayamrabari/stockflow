@@ -19,11 +19,13 @@ class SalesOrderAdmin(admin.ModelAdmin):
         'created_at',
     )
     list_filter = ('status', 'is_direct')
+    list_per_page = 20
     inlines = (SalesOrderItemInline,)
 
 
 @admin.register(SalesOrderItem)
 class SalesOrderItemAdmin(admin.ModelAdmin):
     list_display = ('sales_order', 'product', 'quantity')
+    list_per_page = 20
     list_select_related = ('sales_order', 'product')
     search_fields = ('product__sku', 'product__name')

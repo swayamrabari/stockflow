@@ -50,3 +50,8 @@ class AdminRegistrationTests(TestCase):
                     reverse(f'admin:core_{model._meta.model_name}_changelist')
                 )
                 self.assertEqual(response.status_code, 200)
+
+    def test_every_admin_list_page_shows_20_items(self):
+        for model in MODELS:
+            with self.subTest(model=model.__name__):
+                self.assertEqual(admin.site._registry[model].list_per_page, 20)

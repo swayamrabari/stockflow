@@ -13,7 +13,7 @@ class StockMovementListView(LoginRequiredMixin, ListView):
     model = StockMovement
     template_name = 'stock/list.html'
     context_object_name = 'movements'
-    paginate_by = 25
+    paginate_by = 20
 
     def get_queryset(self):
         queryset = StockMovement.objects.select_related(

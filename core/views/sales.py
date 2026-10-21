@@ -23,6 +23,7 @@ class SalesOrderListView(LoginRequiredMixin, ListView):
     model = SalesOrder
     template_name = 'sales/list.html'
     context_object_name = 'sales_orders'
+    paginate_by = 20
 
     def get_queryset(self):
         queryset = SalesOrder.objects.select_related(

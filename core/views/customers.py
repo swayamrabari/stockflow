@@ -11,6 +11,7 @@ class CustomerListView(LoginRequiredMixin, ListView):
     model = Customer
     template_name = 'customers/list.html'
     context_object_name = 'customers'
+    paginate_by = 20
 
 
 class CustomerCreateView(LoginRequiredMixin, CreateView):

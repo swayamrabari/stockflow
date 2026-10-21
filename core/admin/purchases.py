@@ -19,11 +19,13 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
         'created_at',
     )
     list_filter = ('status', 'is_direct')
+    list_per_page = 20
     inlines = (PurchaseOrderItemInline,)
 
 
 @admin.register(PurchaseOrderItem)
 class PurchaseOrderItemAdmin(admin.ModelAdmin):
     list_display = ('purchase_order', 'product', 'quantity')
+    list_per_page = 20
     list_select_related = ('purchase_order', 'product')
     search_fields = ('product__sku', 'product__name')

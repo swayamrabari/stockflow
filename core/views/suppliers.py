@@ -11,6 +11,7 @@ class SupplierListView(LoginRequiredMixin, ListView):
     model = Supplier
     template_name = 'suppliers/list.html'
     context_object_name = 'suppliers'
+    paginate_by = 20
 
 
 class SupplierCreateView(LoginRequiredMixin, CreateView):

@@ -24,3 +24,4 @@ class UserAdmin(BaseUserAdmin):
     )
     list_display = ('username', 'email', 'role', 'is_superuser')
     list_filter = BaseUserAdmin.list_filter + ('role',)
+    list_per_page = 20

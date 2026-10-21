@@ -22,6 +22,7 @@ class PurchaseOrderListView(LoginRequiredMixin, ListView):
     model = PurchaseOrder
     template_name = 'purchases/list.html'
     context_object_name = 'purchase_orders'
+    paginate_by = 20
 
     def get_queryset(self):
         queryset = PurchaseOrder.objects.select_related(
