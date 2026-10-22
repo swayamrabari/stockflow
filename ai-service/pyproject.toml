@@ -1,0 +1,33 @@
+[project]
+name = "ai-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Swayam Rabari", email = "swayamrabari2375@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.159.1",
+    "langchain>=1.4.7",
+    "langchain-openai>=1.7.2",
+    "langgraph>=1.2.16",
+    "psycopg[binary,pool]>=3.3.6",
+    "python-dotenv>=1.2.4",
+    "sqlalchemy[asyncio]>=2.1.6",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+ai-service = "ai_service:run"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]

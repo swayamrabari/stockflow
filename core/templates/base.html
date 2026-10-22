@@ -36,6 +36,11 @@
             href="{% url 'dashboard' %}"
             >Dashboard</a
           >
+          <a
+            class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            href="{% url 'assistant' %}"
+            >Assistant</a
+          >
           {% endif %}
           <a
             class="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
@@ -89,7 +94,7 @@
     </header>
     {% endif %}
 
-    <div class="flex flex-1 flex-col overflow-y-auto scroll-area">
+    <div class="flex min-h-0 flex-1 flex-col overflow-y-auto scroll-area">
       {% if messages %}
       <div class="mx-auto w-full max-w-6xl space-y-2 px-4 pt-4 sm:px-8">
         {% for message in messages %}

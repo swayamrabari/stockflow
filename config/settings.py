@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+from urllib.parse import parse_qs, unquote, urlparse
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -34,6 +35,12 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
     if host.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
 ]
 
 # Application definition
@@ -61,8 +68,15 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
+# AI service
+AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://127.0.0.1:8001')
+AI_TIMEOUT_SECONDS = int(os.getenv('AI_TIMEOUT_SECONDS', '60'))
+AI_INTERNAL_TOKEN = os.getenv('AI_INTERNAL_TOKEN', '')
+DB_CONN_MAX_AGE = int(os.getenv('DB_CONN_MAX_AGE', '3600'))
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -94,17 +108,50 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['DB_NAME'],
-        'USER': os.environ['DB_USER'],
-        'PASSWORD': os.environ['DB_PASSWORD'],
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 60,
+DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
+
+if DATABASE_URL:
+    parsed_database_url = urlparse(DATABASE_URL)
+    if parsed_database_url.scheme not in {'postgres', 'postgresql'}:
+        raise ValueError('DATABASE_URL must use the postgres or postgresql scheme')
+    if not parsed_database_url.hostname or not parsed_database_url.path:
+        raise ValueError('DATABASE_URL must include a host and database name')
+
+    database_options = {
+        key: values[-1]
+        for key, values in parse_qs(parsed_database_url.query).items()
     }
-}
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': unquote(parsed_database_url.path.lstrip('/')),
+            'USER': unquote(parsed_database_url.username or ''),
+            'PASSWORD': unquote(parsed_database_url.password or ''),
+            'HOST': parsed_database_url.hostname,
+            'PORT': str(parsed_database_url.port or 5432),
+            'OPTIONS': (
+                {'sslmode': 'require', **database_options}
+                if parsed_database_url.hostname.endswith('.supabase.co')
+                and 'sslmode' not in database_options
+                else database_options
+            ),
+            'CONN_MAX_AGE': DB_CONN_MAX_AGE,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ['DB_NAME'],
+            'USER': os.environ['DB_USER'],
+            'PASSWORD': os.environ['DB_PASSWORD'],
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'CONN_MAX_AGE': DB_CONN_MAX_AGE,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -146,7 +193,9 @@ SHORT_DATETIME_FORMAT = 'H:i   d/m/Y'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Email

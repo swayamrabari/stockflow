@@ -5,8 +5,11 @@ requires-python = ">=3.12"
 dependencies = [
     "django>=6.1.2",
     "django-tailwind-cli>=4.8.1",
+    "gunicorn>=23.0.0",
+    "httpx>=0.28.1",
     "psycopg[binary]>=3.3.6",
     "python-dotenv>=1.2.4",
+    "whitenoise>=6.9.0",
 ]
 
 [dependency-groups]
@@ -17,4 +20,9 @@ dev = [
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.uv.workspace]
+members = [
+    "ai-service",
+]
 
