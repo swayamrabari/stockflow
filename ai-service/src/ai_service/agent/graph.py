@@ -54,10 +54,6 @@ def get_agent():
         base_url=base_url,
         timeout=AI_REQUEST_TIMEOUT_SECONDS,
         max_retries=0,
-        model_kwargs={
-            'reasoning_effort': 'none',  # Disables internal thinking steps for instant execution
-            'temperature': 0.0,  # Deterministic outputs often resolve faster
-        },
     )
 
     return create_agent(
