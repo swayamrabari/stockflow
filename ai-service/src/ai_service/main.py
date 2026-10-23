@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import secrets
+import time
 import uuid
 from contextlib import asynccontextmanager
 
@@ -10,6 +11,7 @@ from ai_service.agent.graph import extract_answer, get_agent
 from ai_service.config import (
     AI_MAX_TOOL_CALLS,
     AI_INTERNAL_TOKEN,
+    AI_MODEL,
     AI_REQUEST_TIMEOUT_SECONDS,
     ENVIRONMENT,
     LOG_LEVEL,
@@ -48,7 +50,26 @@ async def add_request_id(request: Request, call_next):
     request_id = request.headers.get('X-Request-Id') or str(uuid.uuid4())
     request.state.request_id = request_id
 
-    response = await call_next(request)
+    started = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception(
+            'HTTP request failed request_id=%s method=%s path=%s elapsed_ms=%.1f',
+            request_id,
+            request.method,
+            request.url.path,
+            (time.perf_counter() - started) * 1000,
+        )
+        raise
+
+    if request.url.path == '/chat':
+        logger.info(
+            'HTTP request completed request_id=%s status=%s elapsed_ms=%.1f',
+            request_id,
+            response.status_code,
+            (time.perf_counter() - started) * 1000,
+        )
     response.headers['X-Request-Id'] = request_id
     return response
 
@@ -88,24 +109,35 @@ async def chat(
         ) from exc
 
     try:
+        agent_started = time.perf_counter()
         async with asyncio.timeout(AI_REQUEST_TIMEOUT_SECONDS):
             result = await agent.ainvoke(
                 {'messages': [{'role': 'user', 'content': message}]},
                 config={
                     'configurable': {'thread_id': session_id},
                     'recursion_limit': AI_MAX_TOOL_CALLS,
+                    'metadata': {'request_id': request_id},
                 },
             )
+        agent_elapsed_ms = (time.perf_counter() - agent_started) * 1000
     except TimeoutError as exc:
+        elapsed_ms = (time.perf_counter() - agent_started) * 1000
+        logger.warning(
+            'Chat timed out request_id=%s elapsed_ms=%.1f timeout_seconds=%s',
+            request_id,
+            elapsed_ms,
+            AI_REQUEST_TIMEOUT_SECONDS,
+        )
         raise HTTPException(
             status_code=504,
             detail='The assistant took too long to respond.',
         ) from exc
     except Exception as exc:
         logger.exception(
-            'Chat failed request_id=%s session_id=%s',
+            'Chat failed request_id=%s session_id=%s elapsed_ms=%.1f',
             request_id,
             session_id,
+            (time.perf_counter() - agent_started) * 1000,
         )
         raise HTTPException(
             status_code=502,
@@ -117,9 +149,11 @@ async def chat(
         answer = 'I could not generate a response.'
 
     logger.info(
-        'Chat request_id=%s session_id=%s tools=%s',
+        'Chat completed request_id=%s session_id=%s model=%s agent_elapsed_ms=%.1f tools=%s',
         request_id,
         session_id,
+        AI_MODEL,
+        agent_elapsed_ms,
         tools_used,
     )
 

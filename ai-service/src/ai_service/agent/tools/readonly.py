@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+import logging
+import re
+import time
+from datetime import date, datetime
 
 from langchain_core.tools import tool
 from sqlalchemy import text
@@ -16,9 +19,28 @@ from ai_service.config import (
 )
 from ai_service.db import SessionLocal
 
+logger = logging.getLogger(__name__)
+
 
 def _limit(value: int, maximum: int) -> int:
     return max(1, min(value, maximum))
+
+
+def _iso_date(value: str) -> str:
+    """Normalize user/model dates before passing them to PostgreSQL."""
+    value = value.strip()
+    if not value:
+        return ''
+
+    for date_format in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
+        try:
+            return datetime.strptime(value, date_format).date().isoformat()
+        except ValueError:
+            continue
+
+    raise ValueError(
+        f'Invalid date format: {value}. Use DD/MM/YYYY or YYYY-MM-DD.'
+    )
 
 
 async def _fetch_all(query: str, params: dict) -> list[dict]:
@@ -27,13 +49,35 @@ async def _fetch_all(query: str, params: dict) -> list[dict]:
     if not AI_READ_ONLY:
         raise RuntimeError('Read-only tools are disabled by configuration.')
 
-    async with SessionLocal() as session:
-        async with session.begin():
-            await session.execute(
-                text(f'SET LOCAL statement_timeout = {int(AI_DB_STATEMENT_TIMEOUT_MS)}')
-            )
-            result = await session.execute(text(query), params)
-            return [dict(row) for row in result.mappings().all()]
+    started = time.perf_counter()
+    operation_match = re.search(r'\bFROM\s+([a-z_]+)', query, re.IGNORECASE)
+    operation = operation_match.group(1) if operation_match else 'query'
+    try:
+        async with SessionLocal() as session:
+            async with session.begin():
+                await session.execute(
+                    text(f'SET LOCAL statement_timeout = {int(AI_DB_STATEMENT_TIMEOUT_MS)}')
+                )
+                query_started = time.perf_counter()
+                result = await session.execute(text(query), params)
+                rows = [dict(row) for row in result.mappings().all()]
+                query_elapsed_ms = (time.perf_counter() - query_started) * 1000
+
+        logger.info(
+            'Database tool completed operation=%s query_elapsed_ms=%.1f total_elapsed_ms=%.1f rows=%s',
+            operation,
+            query_elapsed_ms,
+            (time.perf_counter() - started) * 1000,
+            len(rows),
+        )
+        return rows
+    except Exception:
+        logger.exception(
+            'Database tool failed operation=%s total_elapsed_ms=%.1f',
+            operation,
+            (time.perf_counter() - started) * 1000,
+        )
+        raise
 
 
 def _json(data: object) -> str:
@@ -120,6 +164,8 @@ async def list_stock_movements(
 ) -> str:
     """List stock movements, optionally filtered by SKU, type, date range, or user."""
     safe_days = max(1, min(days, 365))
+    normalized_date_from = _iso_date(date_from)
+    normalized_date_to = _iso_date(date_to)
     rows = await _fetch_all(
         """
         SELECT sm.created_at, p.sku, p.name, sm.movement_type, sm.quantity,
@@ -141,8 +187,8 @@ async def list_stock_movements(
             'days': safe_days,
             'sku': sku.strip(),
             'movement_type': movement_type.strip().lower(),
-            'date_from': date_from.strip(),
-            'date_to': date_to.strip(),
+            'date_from': normalized_date_from,
+            'date_to': normalized_date_to,
             'performed_by': performed_by.strip(),
             'performed_by_pattern': f'%{performed_by.strip()}%',
             'limit': _limit(limit, AI_TOOL_MAX_MOVEMENTS),
@@ -161,6 +207,8 @@ async def list_purchase_orders(
     limit: int = 20,
 ) -> str:
     """List purchase orders, optionally filtered by status, supplier, date range, or creator."""
+    normalized_date_from = _iso_date(date_from)
+    normalized_date_to = _iso_date(date_to)
     rows = await _fetch_all(
         """
         SELECT po.id, po.status, po.is_direct, po.created_at, po.received_at,
@@ -184,8 +232,8 @@ async def list_purchase_orders(
             'status': status.strip().lower(),
             'supplier': supplier.strip(),
             'supplier_pattern': f'%{supplier.strip()}%',
-            'date_from': date_from.strip(),
-            'date_to': date_to.strip(),
+            'date_from': normalized_date_from,
+            'date_to': normalized_date_to,
             'created_by': created_by.strip(),
             'created_by_pattern': f'%{created_by.strip()}%',
             'limit': _limit(limit, AI_TOOL_MAX_ROWS),
@@ -204,6 +252,8 @@ async def list_sales_orders(
     limit: int = 20,
 ) -> str:
     """List sales orders, optionally filtered by status, customer, date range, or creator."""
+    normalized_date_from = _iso_date(date_from)
+    normalized_date_to = _iso_date(date_to)
     rows = await _fetch_all(
         """
         SELECT so.id, so.status, so.is_direct, so.created_at, so.dispatched_at,
@@ -227,8 +277,8 @@ async def list_sales_orders(
             'status': status.strip().lower(),
             'customer': customer.strip(),
             'customer_pattern': f'%{customer.strip()}%',
-            'date_from': date_from.strip(),
-            'date_to': date_to.strip(),
+            'date_from': normalized_date_from,
+            'date_to': normalized_date_to,
             'created_by': created_by.strip(),
             'created_by_pattern': f'%{created_by.strip()}%',
             'limit': _limit(limit, AI_TOOL_MAX_ROWS),
@@ -245,6 +295,8 @@ async def find_pending_dispatches(
     limit: int = 20,
 ) -> str:
     """Find pending sales orders and show which product quantities are short for dispatch."""
+    normalized_date_from = _iso_date(date_from)
+    normalized_date_to = _iso_date(date_to)
     rows = await _fetch_all(
         """
         SELECT so.id AS sales_order_id, so.created_at, c.name AS customer,
@@ -265,8 +317,8 @@ async def find_pending_dispatches(
         LIMIT :limit
         """,
         {
-            'date_from': date_from.strip(),
-            'date_to': date_to.strip(),
+            'date_from': normalized_date_from,
+            'date_to': normalized_date_to,
             'created_by': created_by.strip(),
             'created_by_pattern': f'%{created_by.strip()}%',
             'limit': _limit(limit, AI_TOOL_MAX_ROWS),
